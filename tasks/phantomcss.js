@@ -35,7 +35,7 @@ function findPath(folderName, paths) {
 }
 
 var tmp = require('temporary');
-var phantomBinaryPath = require('phantomjs').path;
+var phantomBinaryPath = require('phantomjs-prebuilt').path;
 var runnerPath = path.resolve(__dirname, '..', 'phantomjs', 'runner.js');
 var phantomCSSPath = findPath('phantomcss', [
   path.resolve(__dirname, '..', 'node_modules'),
@@ -201,9 +201,12 @@ module.exports = function(grunt) {
       options.testFolder.push(path.dirname(filepath));
     });
 
-    // Put failure screenshots in the same place as source screenshots, we'll move/delete them after the test run
+    // Put failure screenshots in the same place as result screenshots, we'll move/delete them after the test run
     // Note: This duplicate assignment is provided for clarity; PhantomCSS will put failures in the screenshots folder by default
     options.failures = options.screenshots;
+    if (!options.results) {
+      options.results = (options.rootUrl || '.') + '/results';
+    }
 
     // Pass necessary paths
     options.tempFile = tempFile.path;
@@ -211,7 +214,6 @@ module.exports = function(grunt) {
     options.casperJSPath = casperJSPath;
 
     // Remove old diff screenshots
-
     options.testFolder.forEach(function(folderpath) {
       deleteDiffScreenshots(folderpath);
       deleteDiffResults(folderpath);

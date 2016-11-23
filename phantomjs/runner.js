@@ -11,13 +11,21 @@
 
 'use-strict';
 
-// Get node fileSystem module and define the separator module
 var fs = require('fs');
-var s = fs.separator;
-var path =  require('path');
+var system = require('system');
 
-// Parse arguments passed in from the grunt task
-var args = JSON.parse(phantom.args[0]);
+var args = JSON.parse(system.args[1]);
+
+// no access to standard node module 'path' inside phantomJS, so implement it this way
+var s = fs.separator;
+var dirname = function(fullPath) {
+  var lastSepIdx = fullPath.lastIndexOf(s);
+  var dname = fullPath;
+  if (lastSepIdx >= 0) {
+    dname = fullPath.substring(0, lastSepIdx);
+  }
+  return dname;
+};
 
 // Get viewport arguments (width | height)
 var viewportSize = {
@@ -47,7 +55,8 @@ var phantomcss = require(phantomCSSPath + s + 'phantomcss.js');
 
 phantomcss.init({
   screenshotRoot: args.screenshots,
-  failedComparisonsRoot: args.failures,
+  comparisonResultRoot: args.results,
+  failedComparisonsRoot: args.results,
   libraryRoot: phantomCSSPath, // Give absolute path, otherwise PhantomCSS fails
   mismatchTolerance: args.mismatchTolerance, // defaults to 0.05
 
@@ -70,7 +79,7 @@ phantomcss.init({
     } else {
       return name + '.png';
     }
-  },
+  }
 });
 
 casper.start();
@@ -79,7 +88,7 @@ args.test.forEach(function(testSuite) {
   phantom.casperTest = true;
   phantom.rootUrl = args.rootUrl;
   casper.then(function() {
-    phantomcss.pathToTest = path.dirname(testSuite) + '/';
+    phantomcss.pathToTest = dirname(testSuite) + '/';
   });
   require(testSuite);
   casper.then(function() {
